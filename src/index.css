@@ -1,111 +1,237 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
-
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+/* src/index.css */
+/* Привязываем переменные к конкретным классам тем, а не к абстрактному root */
+[class^="dark-"], [class^="light-"], .dark, .light {
+  --bg-main: var(--md-sys-color-background);
+  --bg-sidebar: var(--md-sys-color-surface-container);
+  --bg-card: var(--md-sys-color-surface-container-low);
+  --text-primary: var(--md-sys-color-on-surface);
+  --text-secondary: var(--md-sys-color-on-surface-variant);
+  --accent: var(--md-sys-color-primary);
+  --on-accent: var(--md-sys-color-on-primary);
+  --border-color: var(--md-sys-color-outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+/* Глобальные сбросы */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  /* Наследуем фон от app-root */
+  background-color: transparent; 
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
+#app-root {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+/* 1. Глобальная привязка токенов */
+:root {
+  /* Мы переназначаем наши старые переменные на твои новые токены из файлов .dark / .light */
+  --bg-main: var(--md-sys-color-background);
+  --bg-sidebar: var(--md-sys-color-surface-container);
+  --bg-card: var(--md-sys-color-surface-container-low);
+  
+  --text-primary: var(--md-sys-color-on-surface);
+  --text-secondary: var(--md-sys-color-on-surface-variant);
+  
+  --accent: var(--md-sys-color-primary);
+  --on-accent: var(--md-sys-color-on-primary);
+  
+  --border-color: var(--md-sys-color-outline-variant);
+  
+  /* Шрифты из темы */
+  --sans: var(--md-sys-typescale-body-medium-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+}
+
+/* 2. Базовые настройки */
+*, *::before, *::after {
   box-sizing: border-box;
+  font-family: var(--sans);
 }
 
-body {
+/* Применяем фон и цвет текста ко всем возможным контейнерам тем */
+html, body, #root, 
+.dark-high-contrast, .dark-medium-contrast, .dark, 
+.light-high-contrast, .light-medium-contrast, .light {
   margin: 0;
+  min-height: 100vh;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+/* 3. Оформление элементов (Sidebar & Header) */
+.layout-wrapper {
+  display: flex; /* Сайдбар и контент встают в ряд */
+  min-height: 100vh;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+.sidebar {
+  width: 260px; /* Фиксируем ширину сайдбара */
+  min-width: 260px;
+  background-color: var(--bg-sidebar);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  position: sticky; /* Чтобы сайдбар не уплывал при скролле */
+  top: 0;
+  height: 100vh;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+.main-container {
+  flex-grow: 1; /* Контент занимает все оставшееся место */
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-main);
 }
 
-code {
+.top-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px; /* Умеренный отступ, чтобы поиск не прилипал к линии сайдбара */
+  height: 64px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.logo { 
+  color: var(--accent); 
+  font-weight: 800; 
+  text-transform: uppercase; 
+  font-size: 22px; 
+  letter-spacing: 1.5px; 
+  margin-bottom: 32px; 
+}
+
+/* Элементы меню */
+.menu-item { 
+  color: var(--text-secondary); 
+  display: flex; 
+  align-items: center; 
+  gap: 12px; 
+  padding: 10px 12px;
+  border-radius: 8px;
+  transition: 0.2s; 
+  cursor: pointer;
+  text-decoration: none;
+  margin-bottom: 4px;
   font-size: 15px;
-  line-height: 135%;
+}
+
+.menu-item:hover { 
+  color: var(--accent); 
+  background: var(--md-sys-color-primary-container);
+  /* Чтобы текст был читаемым на фоне контейнера, используем on-primary-container */
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.menu-item.active { 
+  background: var(--accent); 
+  color: var(--on-accent); /* Теперь текст на активной кнопке всегда контрастный */
+  font-weight: 600; 
+}
+
+.menu-footer { 
+  border-top: 1px solid var(--border-color); 
+  padding-top: 16px;
+}
+
+/* 4. Стили поиска */
+.search-bar {
+  display: flex;
+  align-items: center;
+  background: var(--md-sys-color-surface-container-highest);
+  padding: 8px 16px;
+  border-radius: 8px;
+  width: 400px;
+  gap: 12px;
+}
+
+.search-bar input {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  outline: none;
+  width: 100%;
+  font-size: 15px;
+}
+
+.search-icon {
+  color: var(--accent);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.search-bar input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--md-sys-color-primary-container);
+}
+
+/* 5. Карточки и Профиль */
+.profile-header-card, .profile-details-card, .feed-card, .uni-card {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.status-badge {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid var(--border-color);
+}
+
+/* Универсальный ховер для ссылок */
+.profile-link:hover {
+  opacity: 0.8;
+  color: var(--accent);
+}
+
+* {
+  /* Плавная смена фона, текста и границ */
+  transition: background-color 0.3s ease-in-out, 
+              color 0.3s ease-in-out, 
+              border-color 0.3s ease-in-out,
+              box-shadow 0.3s ease-in-out;
+}
+
+/* Отключаем транзишн для картинок и иконок, если они дергаются */
+img, svg {
+  transition: none !important;
+}
+
+/* Стили для профиля, чтобы иконка и имя не съезжали */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-primary);
   padding: 4px 8px;
-  background: var(--code-bg);
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.user-info:hover {
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.user-name {
+  font-weight: 500;
+  font-size: 14px;
+  white-space: nowrap; /* Имя не будет переноситься */
+}
+
+.user-icon {
+  color: var(--accent);
+  flex-shrink: 0;
 }

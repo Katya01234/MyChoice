@@ -1,0 +1,1 @@
+export const ChatPage = () => <div style={{padding: '20px'}}><h1>Обсуждения</h1><p>Чат с абитуриентами</p></div>;

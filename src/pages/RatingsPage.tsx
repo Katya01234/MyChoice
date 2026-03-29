@@ -1,0 +1,1 @@
+export const RatingsPage = () => <div style={{padding: '20px'}}><h1>Рейтинги</h1><p>Топ IT-направлений 2026</p></div>;
