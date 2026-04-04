@@ -15,15 +15,19 @@ export interface UserProfile {
 
 export type UserRole = 'ABITURIENT' | 'STUDENT' | 'TEACHER' | 'ADMIN';
 
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
 export interface RegisterRequest {
   email: string;
   password: string;
-  role: UserRole;
+  firstName: string; // Обязательно
+  lastName: string;  // Обязательно
+  age: number;       // Обязательно (integer)
+  city: string;      // Обязательно
+  role?: UserRole;   // В Swagger не в required, но лучше оставить
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
 }
 
 export interface RegisterForm {

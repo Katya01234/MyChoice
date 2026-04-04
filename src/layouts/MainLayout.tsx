@@ -1,4 +1,5 @@
 import React from 'react';
+import './LayoutStructure.css';
 import { NavLink, Link } from 'react-router-dom';
 import { Search, LayoutGrid, MessageSquareText, Settings, HelpCircle, UserCircle, Award } from 'lucide-react';
 import { MOCK_USER_PROFILE } from '../config/mockData';
@@ -11,6 +12,8 @@ interface MainLayoutProps {
 
 // Используем интерфейс MainLayoutProps здесь
 export const MainLayout: React.FC<MainLayoutProps> = ({ children, onThemeChange }) => {
+  const storedName = localStorage.getItem('userName');
+  const displayName = (storedName && storedName.length > 1) ? storedName : MOCK_USER_PROFILE.fullName;
   return (
     <div className="layout-wrapper">
       {/* Сайдбар теперь просто стоит первым в Flex-контейнере */}
@@ -54,7 +57,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, onThemeChange 
             <ThemeSwitcher onThemeChange={onThemeChange} />
             <Link to="/profile" className="profile-link" style={{ textDecoration: 'none' }}>
               <div className="user-info">
-                <span className="user-name">{MOCK_USER_PROFILE.fullName}</span> 
+                <span className="user-name">{displayName}</span> 
                 <UserCircle size={28} className="user-icon" />
               </div>
             </Link>

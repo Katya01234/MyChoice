@@ -1,18 +1,26 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { type UserRole } from '../types/User';
-import { authApi } from '../features/auth/api/auth'; // Импортируем твой сервис
+import { type UserRole } from '../types/User'; // Проверь регистр в названии файла (User.ts или user.ts)
+import { authApi } from '../features/auth/api/auth';
 
 export const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('ABITURIENT');
-  const [loading, setLoading] = useState(false); // Состояние загрузки
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Основные поля (для входа и регистрации)
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  
+  // НОВЫЕ ПОЛЯ для регистрации (из api-docs-v2.json)
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [age, setAge] = useState<string>(''); // Храним как строку для инпута
+  const [city, setCity] = useState('');
+  const [role, setRole] = useState<UserRole>('ABITURIENT');
+
   const handleSubmit = async () => {
-    // 1. Валидация на фронтенде (согласно api-docs.json)
+    // Валидация пароля
     if (password.length < 6) {
       alert('Пароль должен быть не менее 6 символов');
       return;
@@ -20,31 +28,40 @@ export const AuthPage = () => {
 
     setLoading(true);
     try {
-      // 2. Используем созданный authApi
-      const response = isLogin 
-        ? await authApi.login({ email, password })
-        : await authApi.register({ email, password, role });
+      let response;
+      
+      if (isLogin) {
+        response = await authApi.login({ email, password });
+      } else {
+        // Отправляем все 6 обязательных полей при регистрации
+        response = await authApi.register({ 
+          email, 
+          password, 
+          firstName, 
+          lastName, 
+          age: Number(age), // Бэкенд ждет число (integer)
+          city,
+          role 
+        });
+      }
 
       if (response.ok) {
         const data = await response.json();
-        
-        // Бэкенд возвращает Map<String, String>, проверяем наличие токена
         if (data && data.token) {
            localStorage.setItem('token', data.token);
-           // Можно также сохранить email или роль, если бэкенд их присылает
+           localStorage.setItem('userName', `${data.firstName || ''} ${data.lastName || ''}`.trim());
            navigate('/feed');
         } else if (!isLogin) {
-           // Если это регистрация и токен не пришел сразу — переключаем на логин
            alert('Регистрация успешна! Теперь войдите.');
            setIsLogin(true);
         }
       } else {
         const errorData = await response.json();
-        alert(`Ошибка: ${errorData.message || 'Неверные данные'}`);
+        alert(`Ошибка: ${errorData.message || 'Проверьте заполнение полей'}`);
       }
     } catch (error) {
       console.error('Auth error:', error);
-      alert('Ошибка сети: проверьте, запущен ли бэкенд на порту 8081');
+      alert('Ошибка сети: проверьте бэкенд');
     } finally {
       setLoading(false);
     }
@@ -75,23 +92,56 @@ export const AuthPage = () => {
             disabled={loading}
           />
 
+          {/* Блок дополнительных полей, которые видны только при регистрации */}
           {!isLogin && (
-            <div style={{ marginTop: '10px' }}>
-              <p style={{ fontSize: '13px', marginBottom: '10px', color: 'var(--text-secondary)' }}>
-                Кто вы?
-              </p>
-              <select 
-                value={role} 
-                onChange={(e) => setRole(e.target.value as UserRole)}
-                style={s.input}
-                disabled={loading}
-              >
-                <option value="ABITURIENT">Абитуриент</option>
-                <option value="STUDENT">Студент</option>
-                <option value="TEACHER">Преподаватель</option>
-                <option value="ADMIN">Админ</option>
-              </select>
-            </div>
+            <>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <input 
+                  placeholder="Имя" 
+                  style={{...s.input, flex: 1}} 
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
+                <input 
+                  placeholder="Фамилия" 
+                  style={{...s.input, flex: 1}} 
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <input 
+                  type="number"
+                  placeholder="Возраст" 
+                  style={{...s.input, flex: 1}} 
+                  value={age}
+                  onChange={(e) => setAge(e.target.value)}
+                />
+                <input 
+                  placeholder="Город" 
+                  style={{...s.input, flex: 1}} 
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                />
+              </div>
+              
+              <div style={{ marginTop: '10px' }}>
+                <p style={{ fontSize: '13px', marginBottom: '8px', color: 'var(--text-secondary)' }}>
+                  Кто вы?
+                </p>
+                <select 
+                  value={role} 
+                  onChange={(e) => setRole(e.target.value as UserRole)}
+                  style={s.input}
+                  disabled={loading}
+                >
+                  <option value="ABITURIENT">Абитуриент</option>
+                  <option value="STUDENT">Студент</option>
+                  <option value="TEACHER">Преподаватель</option>
+                  <option value="ADMIN">Админ</option>
+                </select>
+              </div>
+            </>
           )}
 
           <button 
@@ -115,23 +165,20 @@ export const AuthPage = () => {
   );
 };
 
-// Стили оставляем без изменений, они у тебя уже отлично настроены под темы!
-
-// ... стили s остаются прежними
 const s = {
   container: { 
     display: 'flex', 
     justifyContent: 'center', 
     alignItems: 'center', 
     height: '100vh', 
-    background: 'var(--bg-main)' // ЗАМЕНИЛИ #0a0c10
+    background: 'var(--bg-main)' 
   },
   card: { 
-    background: 'var(--bg-sidebar)', // Ссылается на surface-container
+    background: 'var(--bg-sidebar)', 
     padding: '40px', 
     borderRadius: '16px', 
     border: '1px solid var(--border-color)', 
-    width: '380px',
+    width: '420px', // Немного увеличил ширину для новых полей
     boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
   },
   form: { display: 'flex', flexDirection: 'column' as const, gap: '12px' },
@@ -139,17 +186,16 @@ const s = {
     padding: '12px', 
     borderRadius: '8px', 
     border: '1px solid var(--border-color)', 
-    background: 'var(--md-sys-color-surface-container-highest)', // Инпуты теперь тоже в теме
+    background: 'var(--md-sys-color-surface-container-highest)', 
     color: 'var(--text-primary)',
-    outline: 'none'
+    outline: 'none',
+    width: '100%'
   },
-  roleGrid: { display: 'flex', flexDirection: 'column' as const, gap: '8px' },
-  roleLabel: { fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center' },
   submitBtn: { 
     padding: '14px', 
     borderRadius: '8px', 
     background: 'var(--accent)', 
-    color: 'var(--on-accent)', // Авто-контраст текста (черный или белый)
+    color: 'var(--on-accent)', 
     fontWeight: 'bold' as const, 
     border: 'none', 
     cursor: 'pointer', 
