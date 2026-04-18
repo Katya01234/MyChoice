@@ -9,23 +9,27 @@ import { AuthPage } from './pages/AuthPage';
 function App() {
   const [theme, setTheme] = useState('dark-medium-contrast'); 
   
-  // Проверяем, есть ли токен в локальном хранилище
-  // Используем !! для превращения строки в булево значение (true/false)
-  const isAuthenticated = !!localStorage.getItem('token');
+  // Состояние авторизации
+  const [isAuth, setIsAuth] = useState(!!localStorage.getItem('token'));
+
+  // Синхронизация между вкладками
+  useEffect(() => {
+    const handleStorage = () => setIsAuth(!!localStorage.getItem('token'));
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   return (
     <div id="app-root" className={theme}>
       <BrowserRouter>
         <Routes>
-          {/* 1. Если пользователь НЕ авторизован, любой путь кидает его на /auth */}
-          {!isAuthenticated ? (
+          {!isAuth ? (
             <>
-              <Route path="/auth" element={<AuthPage />} />
-              {/* Все остальные пути перенаправляют на страницу входа */}
+              {/* Передаем функцию setIsAuth(true) в AuthPage */}
+              <Route path="/auth" element={<AuthPage onLoginSuccess={() => setIsAuth(true)} />} />
               <Route path="*" element={<Navigate to="/auth" replace />} />
             </>
           ) : (
-            /* 2. Если пользователь авторизован — показываем систему */
             <Route 
               path="/*" 
               element={
