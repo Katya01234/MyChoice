@@ -25,7 +25,19 @@ export const userApi = {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       },
       body: JSON.stringify(data)
-    })
+    }),
+
+    getPublicProfile: async (username: string) => {
+    return fetch(`${BASE_URL}/api/users/${username}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+    });
+}
 };
 
 // export const userApi = {

@@ -1,9 +1,8 @@
 import React from 'react';
 import './LayoutStructure.css';
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom'; // 1. Импортируем useNavigate
 import { Search, LayoutGrid, MessageSquareText, Settings, HelpCircle, UserCircle, Award } from 'lucide-react';
 import { ThemeSwitcher } from '../components/ThemeSwitcher';
-// 1. Импортируем хук для доступа к контексту
 import { useAuth } from '../providers/AuthContext'; 
 
 interface MainLayoutProps {
@@ -12,10 +11,21 @@ interface MainLayoutProps {
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ children, onThemeChange }) => {
-  // 2. Достаем данные пользователя и состояние загрузки из контекста
   const { user, loading } = useAuth();
+  const navigate = useNavigate(); // 2. Вызываем хук внутри компонента
 
-  // 3. Формируем отображаемое имя. Больше никакой "Иван Иванов" по умолчанию!
+  // 3. Переносим логику поиска внутрь компонента
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      const query = e.currentTarget.value.trim();
+      if (query.startsWith('@')) {
+        const username = query.substring(1); 
+        navigate(`/profile/${username}`);
+        e.currentTarget.value = ''; // Очищаем поле после поиска
+      }
+    }
+  };
+
   const displayName = user 
     ? `${user.firstName} ${user.lastName}` 
     : (loading ? 'Загрузка...' : 'Гость');
@@ -54,14 +64,18 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, onThemeChange 
         <header className="top-header">
           <div className="search-bar">
             <Search size={16} className="search-icon" />
-            <input type="text" placeholder="Найти вуз, факультет или институт..." />
+            {/* 4. Привязываем обработчик onKeyDown и обновляем placeholder */}
+            <input 
+              type="text" 
+              placeholder="Найти вуз или @пользователя..." 
+              onKeyDown={handleSearch} 
+            />
           </div>
 
           <div className="header-actions">
             <ThemeSwitcher onThemeChange={onThemeChange} />
             <Link to="/profile" className="profile-link" style={{ textDecoration: 'none' }}>
               <div className="user-info">
-                {/* 4. Теперь здесь всегда актуальное имя из профиля */}
                 <span className="user-name">{displayName}</span> 
                 <UserCircle size={28} className="user-icon" />
               </div>

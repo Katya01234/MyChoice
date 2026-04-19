@@ -1,39 +1,58 @@
 import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom'; // Добавляем useParams
 import { UserCircle, Mail, MapPin, Calendar, LogOut, Edit2, Check, X } from 'lucide-react';
 import { userApi } from '../features/auth/api/user';
 import type { UserProfile } from '../types/User';
-// 1. Импортируем хук контекста
 import { useAuth } from '../providers/AuthContext';
 
 export const ProfilePage: React.FC = () => {
-  // 2. Берем данные и функции из контекста
-  const { user, updateUser, logout, loading: authLoading } = useAuth();
+  const { username: urlUsername } = useParams<{ username: string }>(); 
+  const { user: currentUser, updateUser, logout, loading: authLoading } = useAuth();
   
+  const [viewedUser, setViewedUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState<UserProfile | null>(null);
 
-  // Синхронизируем локальную форму с данными из контекста при загрузке
+  // Определяем, является ли просматриваемый профиль нашим
+  const isMyProfile = !urlUsername || urlUsername === currentUser?.username;
+
   useEffect(() => {
-    if (user) {
-      setEditedUser(user);
-    }
-  }, [user]);
+    const fetchProfileData = async () => {
+      if (isMyProfile) {
+        // Если это мой профиль, берем данные из контекста
+        setViewedUser(currentUser);
+        setEditedUser(currentUser);
+      } else if (urlUsername) {
+        // Если чужой, делаем запрос к публичной ручке
+        setLoading(true);
+        try {
+          const response = await userApi.getPublicProfile(urlUsername);
+          if (response.ok) {
+            const data = await response.json();
+            setViewedUser(data);
+          } else {
+            setViewedUser(null);
+          }
+        } catch (error) {
+          console.error("Ошибка при загрузке публичного профиля:", error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchProfileData();
+  }, [urlUsername, currentUser, isMyProfile]);
 
   const handleSave = async () => {
     if (!editedUser) return;
     try {
       setLoading(true);
-      // Отправляем изменения на бэкенд
       const response = await userApi.updateMe(editedUser.email, editedUser);
-      
       if (response.ok) {
-        // 3. ОБЯЗАТЕЛЬНО: Обновляем глобальный контекст
-        // Это заставит Header в MainLayout перерисоваться с новым именем
         updateUser(editedUser); 
         setIsEditing(false);
-      } else {
-        alert('Не удалось сохранить изменения');
       }
     } catch (error) {
       alert('Ошибка при сохранении');
@@ -42,40 +61,36 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
-  // Если контекст еще грузит юзера, показываем спиннер
-  if (authLoading && !user) return <div className="page-content">Загрузка данных...</div>;
+  if (loading || (authLoading && !viewedUser)) return <div className="page-content">Загрузка...</div>;
   
-  if (!user) return (
-    <div className="page-content">
-      <p>Профиль не доступен. Попробуйте перезайти.</p>
-      <button onClick={logout} style={logoutBtnStyle}>Вернуться на вход</button>
-    </div>
-  );
+  if (!viewedUser) return <div className="page-content">Пользователь не найден</div>;
 
   return (
     <div className="page-content profile-page">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '24px', color: 'var(--text-primary)', margin: 0 }}>Мой профиль</h1>
+        <h1 style={{ fontSize: '24px', color: 'var(--text-primary)', margin: 0 }}>
+          {isMyProfile ? 'Мой профиль' : `Профиль ${viewedUser.firstName}`}
+        </h1>
         
-        <div style={{ display: 'flex', gap: '12px' }}>
-          {!isEditing ? (
-            <button onClick={() => setIsEditing(true)} style={editBtnStyle}>
-              <Edit2 size={18} /> Редактировать
-            </button>
-          ) : (
-            <>
-              <button onClick={handleSave} style={saveBtnStyle} disabled={loading}>
-                <Check size={18} /> {loading ? 'Сохранение...' : 'Сохранить'}
+        {isMyProfile && (
+          <div style={{ display: 'flex', gap: '12px' }}>
+            {!isEditing ? (
+              <button onClick={() => setIsEditing(true)} style={editBtnStyle}>
+                <Edit2 size={18} /> Редактировать
               </button>
-              <button onClick={() => { setIsEditing(false); setEditedUser(user); }} style={cancelBtnStyle}>
-                <X size={18} /> Отмена
-              </button>
-            </>
-          )}
-          <button onClick={logout} style={logoutBtnStyle}>
-            <LogOut size={18} /> Выйти
-          </button>
-        </div>
+            ) : (
+              <>
+                <button onClick={handleSave} style={saveBtnStyle} disabled={loading}>
+                  <Check size={18} /> Сохранить
+                </button>
+                <button onClick={() => { setIsEditing(false); setEditedUser(currentUser); }} style={cancelBtnStyle}>
+                  <X size={18} /> Отмена
+                </button>
+              </>
+            )}
+            <button onClick={logout} style={logoutBtnStyle}><LogOut size={18} /> Выйти</button>
+          </div>
+        )}
       </div>
       
       <div className="profile-header-card" style={headerCardStyle}>
@@ -83,65 +98,42 @@ export const ProfilePage: React.FC = () => {
         <div>
           {isEditing ? (
             <div style={{ display: 'flex', gap: '10px', marginBottom: '8px' }}>
-              <input 
-                style={inputStyle} 
-                value={editedUser?.firstName || ''} 
-                onChange={e => setEditedUser(prev => prev ? {...prev, firstName: e.target.value} : null)}
-                placeholder="Имя"
-              />
-              <input 
-                style={inputStyle} 
-                value={editedUser?.lastName || ''} 
-                onChange={e => setEditedUser(prev => prev ? {...prev, lastName: e.target.value} : null)}
-                placeholder="Фамилия"
-              />
+              <input style={inputStyle} value={editedUser?.firstName || ''} onChange={e => setEditedUser(p => p ? {...p, firstName: e.target.value} : null)} />
+              <input style={inputStyle} value={editedUser?.lastName || ''} onChange={e => setEditedUser(p => p ? {...p, lastName: e.target.value} : null)} />
             </div>
           ) : (
             <h2 style={{ fontSize: '32px', margin: '0 0 8px 0', color: 'var(--text-primary)' }}>
-              {user.firstName} {user.lastName}
+              {viewedUser.firstName} {viewedUser.lastName}
             </h2>
           )}
-          <div style={{ color: 'var(--accent)', fontWeight: 'bold' }}>
-            @{user.username || user.email.split('@')[0]}
-          </div>
+          <div style={{ color: 'var(--accent)', fontWeight: 'bold' }}>@{viewedUser.username}</div>
         </div>
       </div>
 
       <div className="profile-details-card" style={detailsCardStyle}>
-        <DetailItem 
-          icon={<Mail size={20}/>} 
-          label="Электронная почта" 
-          value={user.email} 
-        />
+        {/* Почта отображается только в своем профиле */}
+        {isMyProfile && viewedUser.email && (
+          <DetailItem icon={<Mail size={20}/>} label="Электронная почта" value={viewedUser.email} />
+        )}
         
         <DetailItem 
           icon={<MapPin size={20}/>} 
           label="Город" 
           isEditing={isEditing}
-          value={user.city}
-          input={
-            <input 
-              style={inputStyle} 
-              value={editedUser?.city || ''} 
-              onChange={e => setEditedUser(prev => prev ? {...prev, city: e.target.value} : null)} 
-            />
-          }
+          value={viewedUser.city}
+          input={<input style={inputStyle} value={editedUser?.city || ''} onChange={e => setEditedUser(p => p ? {...p, city: e.target.value} : null)} />}
         />
         
-        <DetailItem 
-          icon={<Calendar size={20}/>} 
-          label="Возраст" 
-          isEditing={isEditing}
-          value={`${user.age} лет`}
-          input={
-            <input 
-              type="number" 
-              style={inputStyle} 
-              value={editedUser?.age || 0} 
-              onChange={e => setEditedUser(prev => prev ? {...prev, age: Number(e.target.value)} : null)} 
-            />
-          }
-        />
+        {/* Возраст согласно Swagger доступен только владельцу */}
+        {isMyProfile && viewedUser.age && (
+          <DetailItem 
+            icon={<Calendar size={20}/>} 
+            label="Возраст" 
+            isEditing={isEditing}
+            value={`${viewedUser.age} лет`}
+            input={<input type="number" style={inputStyle} value={editedUser?.age || 0} onChange={e => setEditedUser(p => p ? {...p, age: Number(e.target.value)} : null)} />}
+          />
+        )}
       </div>
     </div>
   );

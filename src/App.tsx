@@ -36,6 +36,7 @@ const AppContent = ({ theme, setTheme }: { theme: string, setTheme: (t: string) 
                     <Route path="/feed" element={<FeedPage />} />
                     <Route path="/ratings" element={<RatingsPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/profile/:username" element={<ProfilePage />} />
                     <Route path="/" element={<Navigate to="/feed" replace />} />
                     <Route path="*" element={<Navigate to="/feed" replace />} />
                   </Routes>
