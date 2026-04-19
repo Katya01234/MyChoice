@@ -1,47 +1,39 @@
-// src/types/user.ts
-
-export interface UserProfile {
-  id: number;
-  fullName: string;
-  email: string;
-  avatarUrl?: string; // Опционально
-  status: 'Абитуриент' | 'Студент' | 'Представитель ВУЗа';
-  registrationDate: string;
-  // Дополнительные поля для абитуриента
-  targetSpecialties: string[]; // Целевые специальности (например, 'Программирование')
-  preferredCities: string[];   // Предпочитаемые города
-  averageEgeScore?: number;    // Средний балл ЕГЭ (опционально)
-}
+// src/types/User.ts
 
 export type UserRole = 'ABITURIENT' | 'STUDENT' | 'TEACHER' | 'ADMIN';
 
-export interface RegisterRequest {
+// То, что мы получаем от /api/users/me (согласно твоему Swagger и ответам сервера)
+export interface UserProfile {
   email: string;
-  password: string;
-  firstName: string; // Обязательно
-  lastName: string;  // Обязательно
-  age: number;       // Обязательно (integer)
-  city: string;      // Обязательно
-  role?: UserRole;   // В Swagger не в required, но лучше оставить
+  firstName: string;
+  lastName: string;
+  age: number;
+  city: string;
+  role: UserRole;
+  username?: string; // Если бэкенд генерирует username на основе почты
 }
 
+// Данные для логина
 export interface LoginRequest {
   email: string;
   password: string;
 }
 
-export interface RegisterForm {
+// Данные для регистрации
+export interface RegisterRequest {
+  email: string;
+  password: string;
   firstName: string;
   lastName: string;
-  email: string;
-  password?: string;
+  age: number;
+  city: string;
   role: UserRole;
 }
 
+// Упрощенный объект пользователя для хранения в стейте (AuthContext)
 export interface User {
-  id: string;
+  email: string;
   firstName: string;
   lastName: string;
-  email: string; // Это наш логин
   role: UserRole;
 }

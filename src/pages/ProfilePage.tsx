@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { UserCircle, Mail, MapPin, Calendar, LogOut } from 'lucide-react';
-import { authApi } from '../features/auth/api/auth';
+import { userApi } from '../features/auth/api/user';
 
 export const ProfilePage: React.FC = () => {
   const [user, setUser] = useState<any>(null);
@@ -14,7 +14,7 @@ export const ProfilePage: React.FC = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await authApi.getMe();
+        const response = await userApi.getMe();
         if (response.ok) {
           const data = await response.json();
           setUser(data);
