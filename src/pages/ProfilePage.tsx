@@ -1,38 +1,63 @@
 import React, { useEffect, useState } from 'react';
-import { UserCircle, Mail, MapPin, Calendar, LogOut } from 'lucide-react';
+import { UserCircle, Mail, MapPin, Calendar, LogOut, Edit2, Check, X } from 'lucide-react';
 import { userApi } from '../features/auth/api/user';
+import type { UserProfile } from '../types/User';
 
 export const ProfilePage: React.FC = () => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Состояния для редактирования
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedUser, setEditedUser] = useState<UserProfile | null>(null);
 
   const handleLogout = () => {
     localStorage.clear();
-    window.location.href = '/auth'; // Жесткий редирект для сброса всех состояний
+    window.location.href = '/auth';
+  };
+
+  const fetchProfile = async () => {
+    try {
+      const response = await userApi.getMe();
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data);
+        setEditedUser(data); // Заполняем форму текущими данными
+        if (data.username) {
+          localStorage.setItem('userName', data.username);
+        }
+      }
+    } catch (error) {
+      console.error("Ошибка профиля:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await userApi.getMe();
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data);
-          if (data.firstName && data.lastName) {
-             localStorage.setItem('userName', `${data.username}`);
-          }
-        }
-      } catch (error) {
-        console.error("Ошибка профиля:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchProfile();
   }, []);
 
-  if (loading) return <div className="page-content">Загрузка данных...</div>;
-  
+  const handleSave = async () => {
+    if (!editedUser) return;
+    try {
+      setLoading(true);
+      // В качестве userId передаем email (как требует твой Gateway)
+      const response = await userApi.updateMe(editedUser.email, editedUser);
+      if (response.ok) {
+        await fetchProfile(); // Обновляем данные после сохранения
+        setIsEditing(false);
+      } else {
+        alert('Не удалось сохранить изменения');
+      }
+    } catch (error) {
+      alert('Ошибка при сохранении');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading && !user) return <div className="page-content">Загрузка данных...</div>;
   if (!user) return (
     <div className="page-content">
       <p>Профиль не доступен. Попробуйте перезайти.</p>
@@ -44,55 +69,124 @@ export const ProfilePage: React.FC = () => {
     <div className="page-content profile-page">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <h1 style={{ fontSize: '24px', color: 'var(--text-primary)', margin: 0 }}>Мой профиль</h1>
-        <button onClick={handleLogout} style={logoutBtnStyle}>
-          <LogOut size={18} />
-          Выйти
-        </button>
+        
+        <div style={{ display: 'flex', gap: '12px' }}>
+          {!isEditing ? (
+            <button onClick={() => setIsEditing(true)} style={editBtnStyle}>
+              <Edit2 size={18} /> Редактировать
+            </button>
+          ) : (
+            <>
+              <button onClick={handleSave} style={saveBtnStyle} disabled={loading}>
+                <Check size={18} /> Сохранить
+              </button>
+              <button onClick={() => { setIsEditing(false); setEditedUser(user); }} style={cancelBtnStyle}>
+                <X size={18} /> Отмена
+              </button>
+            </>
+          )}
+          <button onClick={handleLogout} style={logoutBtnStyle}>
+            <LogOut size={18} /> Выйти
+          </button>
+        </div>
       </div>
       
       <div className="profile-header-card" style={headerCardStyle}>
         <div style={{ color: 'var(--accent)' }}><UserCircle size={90} strokeWidth={1} /></div>
         <div>
-          <h2 style={{ fontSize: '32px', margin: '0 0 8px 0', color: 'var(--text-primary)' }}>
-            {user.firstName} {user.lastName}
-          </h2>
-          <div style={{ color: 'var(--accent)', fontWeight: 'bold' }}>@{user.username}</div>
+          {isEditing ? (
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '8px' }}>
+              <input 
+                style={inputStyle} 
+                value={editedUser?.firstName} 
+                onChange={e => setEditedUser(prev => prev ? {...prev, firstName: e.target.value} : null)}
+                placeholder="Имя"
+              />
+              <input 
+                style={inputStyle} 
+                value={editedUser?.lastName} 
+                onChange={e => setEditedUser(prev => prev ? {...prev, lastName: e.target.value} : null)}
+                placeholder="Фамилия"
+              />
+            </div>
+          ) : (
+            <h2 style={{ fontSize: '32px', margin: '0 0 8px 0', color: 'var(--text-primary)' }}>
+              {user.firstName} {user.lastName}
+            </h2>
+          )}
+          <div style={{ color: 'var(--accent)', fontWeight: 'bold' }}>@{user.username || user.email.split('@')[0]}</div>
         </div>
       </div>
 
       <div className="profile-details-card" style={detailsCardStyle}>
-        <DetailItem icon={<Mail size={20}/>} label="Электронная почта" value={user.email} />
-        <DetailItem icon={<MapPin size={20}/>} label="Город" value={user.city} />
-        <DetailItem icon={<Calendar size={20}/>} label="Возраст" value={`${user.age} лет`} />
+        <DetailItem 
+          icon={<Mail size={20}/>} 
+          label="Электронная почта" 
+          value={user.email} // Почту обычно менять нельзя, она как ID
+        />
+        
+        <DetailItem 
+          icon={<MapPin size={20}/>} 
+          label="Город" 
+          isEditing={isEditing}
+          value={user.city}
+          input={<input style={inputStyle} value={editedUser?.city} onChange={e => setEditedUser(prev => prev ? {...prev, city: e.target.value} : null)} />}
+        />
+        
+        <DetailItem 
+          icon={<Calendar size={20}/>} 
+          label="Возраст" 
+          isEditing={isEditing}
+          value={`${user.age} лет`}
+          input={<input type="number" style={inputStyle} value={editedUser?.age} onChange={e => setEditedUser(prev => prev ? {...prev, age: Number(e.target.value)} : null)} />}
+        />
       </div>
     </div>
   );
 };
 
-const logoutBtnStyle = {
+// Вспомогательный компонент для пунктов деталей
+const DetailItem = ({ icon, label, value, isEditing, input }: any) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+    <div style={{ color: 'var(--accent)' }}>{icon}</div>
+    <div style={{ flex: 1 }}>
+      <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)' }}>{label}</p>
+      {isEditing && input ? (
+        <div style={{ marginTop: '4px' }}>{input}</div>
+      ) : (
+        <p style={{ margin: 0, fontSize: '16px', color: 'var(--text-primary)', fontWeight: 500 }}>{value}</p>
+      )}
+    </div>
+  </div>
+);
+
+// Стили
+const commonBtnStyle = {
   display: 'flex',
   alignItems: 'center',
   gap: '8px',
   padding: '10px 20px',
   borderRadius: '8px',
-  border: '1px solid #ff4d4f',
-  color: '#ff4d4f',
-  background: 'transparent',
   cursor: 'pointer',
   fontWeight: 500,
-  transition: 'all 0.2s'
+  transition: 'all 0.2s',
+  border: '1px solid transparent'
 };
 
-// Стили карточек из твоего кода
+const logoutBtnStyle = { ...commonBtnStyle, border: '1px solid #ff4d4f', color: '#ff4d4f', background: 'transparent' };
+const editBtnStyle = { ...commonBtnStyle, background: 'var(--accent)', color: 'var(--on-accent)', border: 'none' };
+const saveBtnStyle = { ...commonBtnStyle, background: '#52c41a', color: 'white', border: 'none' };
+const cancelBtnStyle = { ...commonBtnStyle, background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--border-color)' };
+
+const inputStyle = {
+  padding: '8px 12px',
+  borderRadius: '6px',
+  border: '1px solid var(--border-color)',
+  background: 'var(--bg-main)',
+  color: 'var(--text-primary)',
+  fontSize: '14px',
+  width: '100%'
+};
+
 const headerCardStyle = { padding: '40px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '32px', marginBottom: '24px', background: 'var(--bg-sidebar)', border: '1px solid var(--border-color)' };
 const detailsCardStyle = { padding: '32px', borderRadius: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px', background: 'var(--bg-sidebar)', border: '1px solid var(--border-color)' };
-
-const DetailItem = ({ icon, label, value }: any) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-    <div style={{ color: 'var(--accent)' }}>{icon}</div>
-    <div>
-      <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)' }}>{label}</p>
-      <p style={{ margin: 0, fontSize: '16px', color: 'var(--text-primary)', fontWeight: 500 }}>{value}</p>
-    </div>
-  </div>
-);
