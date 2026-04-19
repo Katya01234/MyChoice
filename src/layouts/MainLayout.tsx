@@ -62,26 +62,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, onThemeChange 
 
       <div className="main-container">
         <header className="top-header">
-          <div className="search-bar">
-            <Search size={16} className="search-icon" />
-            {/* 4. Привязываем обработчик onKeyDown и обновляем placeholder */}
-            <input 
-              type="text" 
-              placeholder="Найти вуз или @пользователя..." 
-              onKeyDown={handleSearch} 
-            />
-          </div>
-
-          <div className="header-actions">
-            <ThemeSwitcher onThemeChange={onThemeChange} />
-            <Link to="/profile" className="profile-link" style={{ textDecoration: 'none' }}>
-              <div className="user-info">
-                <span className="user-name">{displayName}</span> 
-                <UserCircle size={28} className="user-icon" />
-              </div>
-            </Link>
-          </div>
-        </header>
+          <div className="header-left-space"></div> 
+            <div className="header-actions">
+              <ThemeSwitcher onThemeChange={onThemeChange} />
+              <Link to="/profile" className="profile-link" style={{ textDecoration: 'none' }}>
+                <div className="user-info">
+                  <span className="user-name">{displayName}</span> 
+                  <UserCircle size={28} className="user-icon" />
+                </div>
+              </Link>
+            </div>
+          </header>
 
         <main className="content-area">
           {children}
