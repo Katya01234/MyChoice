@@ -2,21 +2,26 @@ import React from 'react';
 import './LayoutStructure.css';
 import { NavLink, Link } from 'react-router-dom';
 import { Search, LayoutGrid, MessageSquareText, Settings, HelpCircle, UserCircle, Award } from 'lucide-react';
-import { MOCK_USER_PROFILE } from '../config/mockData';
-import { ThemeSwitcher } from '../components/ThemeSwitcher'; // Импортируем!
+import { ThemeSwitcher } from '../components/ThemeSwitcher';
+// 1. Импортируем хук для доступа к контексту
+import { useAuth } from '../providers/AuthContext'; 
 
 interface MainLayoutProps {
   children?: React.ReactNode;
   onThemeChange: (theme: string) => void;
 }
 
-// Используем интерфейс MainLayoutProps здесь
 export const MainLayout: React.FC<MainLayoutProps> = ({ children, onThemeChange }) => {
-  const storedName = localStorage.getItem('userName');
-  const displayName = (storedName && storedName.length > 1) ? storedName : MOCK_USER_PROFILE.fullName;
+  // 2. Достаем данные пользователя и состояние загрузки из контекста
+  const { user, loading } = useAuth();
+
+  // 3. Формируем отображаемое имя. Больше никакой "Иван Иванов" по умолчанию!
+  const displayName = user 
+    ? `${user.firstName} ${user.lastName}` 
+    : (loading ? 'Загрузка...' : 'Гость');
+
   return (
     <div className="layout-wrapper">
-      {/* Сайдбар теперь просто стоит первым в Flex-контейнере */}
       <aside className="sidebar">
         <div className="logo">U-Choice</div>
         <nav className="menu">
@@ -45,7 +50,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, onThemeChange 
         </div>
       </aside>
 
-      {/* main-container автоматически займет все оставшееся место справа */}
       <div className="main-container">
         <header className="top-header">
           <div className="search-bar">
@@ -57,6 +61,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, onThemeChange 
             <ThemeSwitcher onThemeChange={onThemeChange} />
             <Link to="/profile" className="profile-link" style={{ textDecoration: 'none' }}>
               <div className="user-info">
+                {/* 4. Теперь здесь всегда актуальное имя из профиля */}
                 <span className="user-name">{displayName}</span> 
                 <UserCircle size={28} className="user-icon" />
               </div>

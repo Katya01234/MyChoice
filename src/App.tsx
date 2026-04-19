@@ -1,32 +1,30 @@
-import { useState, useEffect } from 'react'; 
+import { useState } from 'react'; 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { MainLayout } from './layouts/MainLayout';
 import { FeedPage } from './pages/FeedPage';
 import { RatingsPage } from './pages/RatingsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { AuthPage } from './pages/AuthPage'; 
+// Импортируем провайдер и хук
+import { AuthProvider, useAuth } from './providers/AuthContext';
 
-function App() {
-  const [theme, setTheme] = useState('dark-medium-contrast'); 
+// Создаем отдельный компонент для роутинга, чтобы использовать useAuth
+const AppContent = ({ theme, setTheme }: { theme: string, setTheme: (t: string) => void }) => {
+  const { user, loading } = useAuth();
   
-  // Состояние авторизации
-  const [isAuth, setIsAuth] = useState(!!localStorage.getItem('token'));
-
-  // Синхронизация между вкладками
-  useEffect(() => {
-    const handleStorage = () => setIsAuth(!!localStorage.getItem('token'));
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
-  }, []);
+  // Пока контекст проверяет токен и грузит юзера, показываем заглушку
+  if (loading) {
+    return <div className={`loading-screen ${theme}`}>Загрузка...</div>;
+  }
 
   return (
     <div id="app-root" className={theme}>
       <BrowserRouter>
         <Routes>
-          {!isAuth ? (
+          {!user ? (
             <>
-              {/* Передаем функцию setIsAuth(true) в AuthPage */}
-              <Route path="/auth" element={<AuthPage onLoginSuccess={() => setIsAuth(true)} />} />
+              {/* Больше не нужно прокидывать setIsAuth вручную! */}
+              <Route path="/auth" element={<AuthPage />} />
               <Route path="*" element={<Navigate to="/auth" replace />} />
             </>
           ) : (
@@ -48,6 +46,16 @@ function App() {
         </Routes>
       </BrowserRouter>
     </div>
+  );
+};
+
+function App() {
+  const [theme, setTheme] = useState('dark-medium-contrast'); 
+
+  return (
+    <AuthProvider>
+      <AppContent theme={theme} setTheme={setTheme} />
+    </AuthProvider>
   );
 }
 

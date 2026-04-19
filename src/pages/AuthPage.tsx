@@ -2,12 +2,17 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { type UserRole } from '../types/User'; 
 import { authApi } from '../features/auth/api/auth';
+// 1. Импортируем хук контекста
+import { useAuth } from '../providers/AuthContext';
 
 interface AuthPageProps {
   onLoginSuccess?: () => void;
 }
 
 export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
+  // 2. Достаем refreshUser из контекста
+  const { refreshUser } = useAuth();
+  
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -43,11 +48,15 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
         if (isLogin) {
           const token = data.token;
           if (token) {
-            // СНАЧАЛА сохраняем всё в localStorage
-            alert('Успешный вход, сохраняем данные в localStorage ' + token);
             localStorage.setItem('token', token);
-            if (onLoginSuccess) onLoginSuccess();
             
+            // 3. САМЫЙ ВАЖНЫЙ МОМЕНТ:
+            // Говорим контексту обновить данные. 
+            // Это изменит user с null на объект профиля.
+            await refreshUser(); 
+            
+            // Теперь AppContent увидит, что юзер есть, и пустит дальше.
+            if (onLoginSuccess) onLoginSuccess();
             navigate('/feed');
           }
         } else {
@@ -59,7 +68,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
         alert(`Ошибка: ${errorData.message || 'Неверные данные'}`);
       }
     } catch (error) {
-      alert('Ошибка связи с сервером. Проверьте ngrok.');
+      alert('Ошибка связи с сервером. Проверьте соединение.');
     } finally {
       setLoading(false);
     }
@@ -99,11 +108,12 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess }) => {
   );
 };
 
+// Стили оставляем без изменений
 const s = {
   container: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--bg-main)' },
   card: { background: 'var(--bg-sidebar)', padding: '40px', borderRadius: '16px', border: '1px solid var(--border-color)', width: '420px' },
   form: { display: 'flex', flexDirection: 'column' as const, gap: '12px' },
-  input: { padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--md-sys-color-surface-container-highest)', color: 'var(--text-primary)', width: '100%' },
+  input: { padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-main)', color: 'var(--text-primary)', width: '100%' },
   submitBtn: { padding: '14px', borderRadius: '8px', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 'bold' as const, border: 'none', cursor: 'pointer' },
   switchBtn: { background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '13px' }
 };

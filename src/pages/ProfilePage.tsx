@@ -2,50 +2,35 @@ import React, { useEffect, useState } from 'react';
 import { UserCircle, Mail, MapPin, Calendar, LogOut, Edit2, Check, X } from 'lucide-react';
 import { userApi } from '../features/auth/api/user';
 import type { UserProfile } from '../types/User';
+// 1. Импортируем хук контекста
+import { useAuth } from '../providers/AuthContext';
 
 export const ProfilePage: React.FC = () => {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  // 2. Берем данные и функции из контекста
+  const { user, updateUser, logout, loading: authLoading } = useAuth();
   
-  // Состояния для редактирования
+  const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState<UserProfile | null>(null);
 
-  const handleLogout = () => {
-    localStorage.clear();
-    window.location.href = '/auth';
-  };
-
-  const fetchProfile = async () => {
-    try {
-      const response = await userApi.getMe();
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data);
-        setEditedUser(data); // Заполняем форму текущими данными
-        if (data.username) {
-          localStorage.setItem('userName', data.username);
-        }
-      }
-    } catch (error) {
-      console.error("Ошибка профиля:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Синхронизируем локальную форму с данными из контекста при загрузке
   useEffect(() => {
-    fetchProfile();
-  }, []);
+    if (user) {
+      setEditedUser(user);
+    }
+  }, [user]);
 
   const handleSave = async () => {
     if (!editedUser) return;
     try {
       setLoading(true);
-      // В качестве userId передаем email (как требует твой Gateway)
+      // Отправляем изменения на бэкенд
       const response = await userApi.updateMe(editedUser.email, editedUser);
+      
       if (response.ok) {
-        await fetchProfile(); // Обновляем данные после сохранения
+        // 3. ОБЯЗАТЕЛЬНО: Обновляем глобальный контекст
+        // Это заставит Header в MainLayout перерисоваться с новым именем
+        updateUser(editedUser); 
         setIsEditing(false);
       } else {
         alert('Не удалось сохранить изменения');
@@ -57,11 +42,13 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
-  if (loading && !user) return <div className="page-content">Загрузка данных...</div>;
+  // Если контекст еще грузит юзера, показываем спиннер
+  if (authLoading && !user) return <div className="page-content">Загрузка данных...</div>;
+  
   if (!user) return (
     <div className="page-content">
       <p>Профиль не доступен. Попробуйте перезайти.</p>
-      <button onClick={handleLogout} style={logoutBtnStyle}>Вернуться на вход</button>
+      <button onClick={logout} style={logoutBtnStyle}>Вернуться на вход</button>
     </div>
   );
 
@@ -78,14 +65,14 @@ export const ProfilePage: React.FC = () => {
           ) : (
             <>
               <button onClick={handleSave} style={saveBtnStyle} disabled={loading}>
-                <Check size={18} /> Сохранить
+                <Check size={18} /> {loading ? 'Сохранение...' : 'Сохранить'}
               </button>
               <button onClick={() => { setIsEditing(false); setEditedUser(user); }} style={cancelBtnStyle}>
                 <X size={18} /> Отмена
               </button>
             </>
           )}
-          <button onClick={handleLogout} style={logoutBtnStyle}>
+          <button onClick={logout} style={logoutBtnStyle}>
             <LogOut size={18} /> Выйти
           </button>
         </div>
@@ -98,13 +85,13 @@ export const ProfilePage: React.FC = () => {
             <div style={{ display: 'flex', gap: '10px', marginBottom: '8px' }}>
               <input 
                 style={inputStyle} 
-                value={editedUser?.firstName} 
+                value={editedUser?.firstName || ''} 
                 onChange={e => setEditedUser(prev => prev ? {...prev, firstName: e.target.value} : null)}
                 placeholder="Имя"
               />
               <input 
                 style={inputStyle} 
-                value={editedUser?.lastName} 
+                value={editedUser?.lastName || ''} 
                 onChange={e => setEditedUser(prev => prev ? {...prev, lastName: e.target.value} : null)}
                 placeholder="Фамилия"
               />
@@ -114,7 +101,9 @@ export const ProfilePage: React.FC = () => {
               {user.firstName} {user.lastName}
             </h2>
           )}
-          <div style={{ color: 'var(--accent)', fontWeight: 'bold' }}>@{user.username || user.email.split('@')[0]}</div>
+          <div style={{ color: 'var(--accent)', fontWeight: 'bold' }}>
+            @{user.username || user.email.split('@')[0]}
+          </div>
         </div>
       </div>
 
@@ -122,7 +111,7 @@ export const ProfilePage: React.FC = () => {
         <DetailItem 
           icon={<Mail size={20}/>} 
           label="Электронная почта" 
-          value={user.email} // Почту обычно менять нельзя, она как ID
+          value={user.email} 
         />
         
         <DetailItem 
@@ -130,7 +119,13 @@ export const ProfilePage: React.FC = () => {
           label="Город" 
           isEditing={isEditing}
           value={user.city}
-          input={<input style={inputStyle} value={editedUser?.city} onChange={e => setEditedUser(prev => prev ? {...prev, city: e.target.value} : null)} />}
+          input={
+            <input 
+              style={inputStyle} 
+              value={editedUser?.city || ''} 
+              onChange={e => setEditedUser(prev => prev ? {...prev, city: e.target.value} : null)} 
+            />
+          }
         />
         
         <DetailItem 
@@ -138,7 +133,14 @@ export const ProfilePage: React.FC = () => {
           label="Возраст" 
           isEditing={isEditing}
           value={`${user.age} лет`}
-          input={<input type="number" style={inputStyle} value={editedUser?.age} onChange={e => setEditedUser(prev => prev ? {...prev, age: Number(e.target.value)} : null)} />}
+          input={
+            <input 
+              type="number" 
+              style={inputStyle} 
+              value={editedUser?.age || 0} 
+              onChange={e => setEditedUser(prev => prev ? {...prev, age: Number(e.target.value)} : null)} 
+            />
+          }
         />
       </div>
     </div>
