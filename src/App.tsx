@@ -4,6 +4,7 @@ import { MainLayout } from './layouts/MainLayout';
 import { FeedPage } from './pages/FeedPage';
 import { RatingsPage } from './pages/RatingsPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { UniversitiesPage } from './pages/UniversitiesPage';
 import { AuthPage } from './pages/AuthPage'; 
 // Импортируем провайдер и хук
 import { AuthProvider, useAuth } from './providers/AuthContext';
@@ -36,6 +37,7 @@ const AppContent = ({ theme, setTheme }: { theme: string, setTheme: (t: string) 
                     <Route path="/feed" element={<FeedPage />} />
                     <Route path="/ratings" element={<RatingsPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/universities" element={<UniversitiesPage />} />
                     <Route path="/profile/:username" element={<ProfilePage />} />
                     <Route path="/" element={<Navigate to="/feed" replace />} />
                     <Route path="*" element={<Navigate to="/feed" replace />} />

@@ -1,7 +1,7 @@
 import React from 'react';
 import './LayoutStructure.css';
 import { NavLink, Link, useNavigate } from 'react-router-dom'; // 1. Импортируем useNavigate
-import { Search, LayoutGrid, MessageSquareText, Settings, HelpCircle, UserCircle, Award } from 'lucide-react';
+import { Search, LayoutGrid, MessageSquareText, Settings, HelpCircle, UserCircle, Award, GraduationCap } from 'lucide-react';
 import { ThemeSwitcher } from '../components/ThemeSwitcher';
 import { useAuth } from '../providers/AuthContext'; 
 
@@ -35,6 +35,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, onThemeChange 
       <aside className="sidebar">
         <div className="logo">U-Choice</div>
         <nav className="menu">
+          <NavLink to="/universities" className={({ isActive }) => isActive ? "menu-item active" : "menu-item"}>
+            <GraduationCap size={20} />
+            <span>Университеты</span>
+          </NavLink>
           <NavLink to="/feed" className={({ isActive }) => isActive ? "menu-item active" : "menu-item"}>
             <LayoutGrid size={20} />
             <span>Лента</span>
