@@ -1,4 +1,4 @@
-import { type University } from '../types/University';
+import { type University } from '../types/university';
 import { type UserProfile } from '../types/User';
 
 export const MOCK_UNIVERSITIES: University[] = [

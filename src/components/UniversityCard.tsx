@@ -1,5 +1,5 @@
 import React from 'react';
-import { type University } from '../types/University';
+import { type University } from '../types/university';
 
 interface Props {
   data: University;
