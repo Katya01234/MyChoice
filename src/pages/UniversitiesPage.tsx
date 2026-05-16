@@ -1,13 +1,14 @@
-// src/pages/UniversitiesPage.tsx
 import React, { useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { UniversityCard } from '../features/auth/components/UniversityCard';
 import { useUniversities } from '../features/university/hooks/useUniversity';
 import { UniversityDetailsPage } from './UniversityDetailsPage';
+import { FacultyDetailsPage } from './FacultyDetailsPage';
 
 export const UniversitiesPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUniId, setSelectedUniId] = useState<number | null>(null);
+  const [selectedFacultyId, setSelectedFacultyId] = useState<number | null>(null);
   const [isFocused, setIsFocused] = useState(false);
 
   const { data, isLoading } = useUniversities(0, 50);
@@ -58,21 +59,37 @@ export const UniversitiesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Исправленный Overlay */}
+      {/* СЛОЙ 1: Детали Университета */}
       {selectedUniId && (
         <div 
           className="details-overlay" 
-          onClick={() => setSelectedUniId(null)} // Закрытие при клике на область слева
+          onClick={() => { setSelectedUniId(null); setSelectedFacultyId(null); }}
         >
-          <div 
-            className="details-modal" 
-            onClick={(e) => e.stopPropagation()} // Чтобы клик внутри модалки не закрывал её
-          >
-            <button className="back-button" onClick={() => setSelectedUniId(null)}>
+          <div className="details-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="back-button" onClick={() => { setSelectedUniId(null); setSelectedFacultyId(null); }}>
               <X size={20} />
               <span>Назад к списку</span>
             </button>
-            <UniversityDetailsPage universityId={selectedUniId} />
+            <UniversityDetailsPage 
+              universityId={selectedUniId} 
+              onFacultyClick={(id) => setSelectedFacultyId(id)} 
+            />
+          </div>
+        </div>
+      )}
+
+      {/* СЛОЙ 2: Детали Факультета (перекрывает первый слой) */}
+      {selectedFacultyId && (
+        <div 
+          className="details-overlay faculty-overlay" 
+          onClick={() => setSelectedFacultyId(null)}
+        >
+          <div className="details-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="back-button" onClick={() => setSelectedFacultyId(null)}>
+              <X size={20} />
+              <span>Назад к университету</span>
+            </button>
+            <FacultyDetailsPage facultyId={selectedFacultyId} />
           </div>
         </div>
       )}

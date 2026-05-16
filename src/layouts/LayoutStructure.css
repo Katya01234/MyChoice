@@ -216,3 +216,18 @@
   from { transform: translateX(100%); }
   to { transform: translateX(0); }
 }
+
+.faculty-overlay {
+  z-index: 1100 !important;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.details-overlay.faculty-overlay {
+  z-index: 1200 !important; /* Значение выше, чем у стандартного оверлея университета */
+  background: rgba(0, 0, 0, 0.6); /* Затемняем предыдущий сайдбар */
+}
+
+/* Убедись, что у базового оверлея z-index равен 1000 или 1100 */
+.details-overlay {
+  z-index: 1000;
+}

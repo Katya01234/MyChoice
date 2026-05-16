@@ -32,3 +32,11 @@ export const usePrograms = (facultyId: number) => {
     enabled: !!facultyId,
   });
 };
+
+export const useFacultyDetails = (id: number) => {
+  return useQuery({
+    queryKey: ['faculty', id],
+    queryFn: () => universityApi.getFacultyById(id),
+    enabled: !!id,
+  });
+};
