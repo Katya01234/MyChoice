@@ -1,14 +1,17 @@
+// src/pages/UniversitiesPage.tsx
 import React, { useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { UniversityCard } from '../features/auth/components/UniversityCard';
 import { useUniversities } from '../features/university/hooks/useUniversity';
 import { UniversityDetailsPage } from './UniversityDetailsPage';
 import { FacultyDetailsPage } from './FacultyDetailsPage';
+import { ProgramDetailsPage } from './ProgramDetailsPage'; // Импортируем новый оверлей
 
 export const UniversitiesPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUniId, setSelectedUniId] = useState<number | null>(null);
   const [selectedFacultyId, setSelectedFacultyId] = useState<number | null>(null);
+  const [selectedProgramId, setSelectedProgramId] = useState<number | null>(null); // Третий стейт
   const [isFocused, setIsFocused] = useState(false);
 
   const { data, isLoading } = useUniversities(0, 50);
@@ -17,6 +20,13 @@ export const UniversitiesPage: React.FC = () => {
     uni.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     uni.city.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Сброс абсолютно всех панелей при глобальном закрытии
+  const closeAll = () => {
+    setSelectedUniId(null);
+    setSelectedFacultyId(null);
+    setSelectedProgramId(null);
+  };
 
   return (
     <div className="page-content" style={{ position: 'relative', minHeight: '100%' }}>
@@ -61,12 +71,9 @@ export const UniversitiesPage: React.FC = () => {
 
       {/* СЛОЙ 1: Детали Университета */}
       {selectedUniId && (
-        <div 
-          className="details-overlay" 
-          onClick={() => { setSelectedUniId(null); setSelectedFacultyId(null); }}
-        >
+        <div className="details-overlay" onClick={closeAll}>
           <div className="details-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="back-button" onClick={() => { setSelectedUniId(null); setSelectedFacultyId(null); }}>
+            <button className="back-button" onClick={closeAll}>
               <X size={20} />
               <span>Назад к списку</span>
             </button>
@@ -78,18 +85,37 @@ export const UniversitiesPage: React.FC = () => {
         </div>
       )}
 
-      {/* СЛОЙ 2: Детали Факультета (перекрывает первый слой) */}
+      {/* СЛОЙ 2: Детали Факультета */}
       {selectedFacultyId && (
         <div 
           className="details-overlay faculty-overlay" 
-          onClick={() => setSelectedFacultyId(null)}
+          onClick={() => { setSelectedFacultyId(null); setSelectedProgramId(null); }}
         >
           <div className="details-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="back-button" onClick={() => setSelectedFacultyId(null)}>
+            <button className="back-button" onClick={() => { setSelectedFacultyId(null); setSelectedProgramId(null); }}>
               <X size={20} />
               <span>Назад к университету</span>
             </button>
-            <FacultyDetailsPage facultyId={selectedFacultyId} />
+            <FacultyDetailsPage 
+              facultyId={selectedFacultyId} 
+              onProgramClick={(id) => setSelectedProgramId(id)} // Ловим клик по программе
+            />
+          </div>
+        </div>
+      )}
+
+      {/* СЛОЙ 3: Детали Программы (самый верхний слой за счет повышенного z-index) */}
+      {selectedProgramId && (
+        <div 
+          className="details-overlay program-overlay" 
+          onClick={() => setSelectedProgramId(null)} // Клик мимо закрывает только программу
+        >
+          <div className="details-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="back-button" onClick={() => setSelectedProgramId(null)}>
+              <X size={20} />
+              <span>Назад к факультету</span>
+            </button>
+            <ProgramDetailsPage programId={selectedProgramId} />
           </div>
         </div>
       )}

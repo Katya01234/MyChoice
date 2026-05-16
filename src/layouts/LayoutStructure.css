@@ -231,3 +231,9 @@
 .details-overlay {
   z-index: 1000;
 }
+
+/* Оверлей программы ложится на самый верх */
+.details-overlay.program-overlay {
+  z-index: 1300 !important; /* Выше чем факультет (1200) и университет (1000) */
+  background: rgba(0, 0, 0, 0.6);
+}

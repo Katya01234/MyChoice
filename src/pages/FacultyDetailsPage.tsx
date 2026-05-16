@@ -1,11 +1,14 @@
+// src/pages/FacultyDetailsPage.tsx
 import React from 'react';
 import { useFacultyDetails, usePrograms } from '../features/university/hooks/useUniversity';
+import type { ProgramResponse } from '../types/university';
 
 interface FacultyDetailsPageProps {
   facultyId: number;
+  onProgramClick: (programId: number) => void; // Новый проп для проброса клика вверх
 }
 
-export const FacultyDetailsPage: React.FC<FacultyDetailsPageProps> = ({ facultyId }) => {
+export const FacultyDetailsPage: React.FC<FacultyDetailsPageProps> = ({ facultyId, onProgramClick }) => {
   const { data: faculty, isLoading: facultyLoading } = useFacultyDetails(facultyId);
   const { data: programs, isLoading: programsLoading } = usePrograms(facultyId);
 
@@ -33,15 +36,20 @@ export const FacultyDetailsPage: React.FC<FacultyDetailsPageProps> = ({ facultyI
 
       <div style={{ display: 'grid', gap: '12px' }}>
         {programs && programs.length > 0 ? (
-          programs.map((prog: any) => (
+          programs.map((prog: ProgramResponse) => (
             <div 
               key={prog.id}
+              onClick={() => onProgramClick(prog.id)} // Триггерим открытие третьего оверлея
               style={{
                 padding: '16px',
                 background: 'var(--bg-main)',
                 border: '1px solid var(--border-color)',
-                borderRadius: '8px'
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'transform 0.2s, border-color 0.2s',
               }}
+              onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent-color)'}
+              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
             >
               <h4 style={{ fontSize: '16px', color: 'var(--text-primary)', marginBottom: '4px' }}>
                 {prog.name}

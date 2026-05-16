@@ -53,3 +53,25 @@ export interface PageResponse<T> {
   totalElements: number;
   totalPages: number;
 }
+
+export interface ReviewRequest {
+  programId: number;
+  score: number; // int32
+  comment?: string;
+}
+
+export interface ReviewResponse {
+  id: string; // uuid
+  programId: number;
+  score: number;
+  comment?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReviewPagedResponse {
+  content: ReviewResponse[];
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+}
