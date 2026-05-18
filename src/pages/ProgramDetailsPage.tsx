@@ -19,7 +19,6 @@ const getDegreeLabel = (degree: string) => {
 
 export const ProgramDetailsPage: React.FC<ProgramDetailsPageProps> = ({ programId }) => {
   // 1. Получаем данные программы и отзывов через TanStack Query
-  // Если отзыва нет (бэк вернул 404), то в myReview запишется null, и страница предложит форму создания
   const { data: program, isLoading: isProgramLoading } = useProgramDetails(programId);
   const { data: myReview, isLoading: isMyReviewLoading } = useMyReview(programId);
   const { data: reviewsData, isLoading: isReviewsLoading } = useProgramReviews(programId);
@@ -27,10 +26,10 @@ export const ProgramDetailsPage: React.FC<ProgramDetailsPageProps> = ({ programI
 
   // 2. Стейты формы отзывов
   const [comment, setComment] = useState('');
-  const [score, setScore] = useState(10); // По умолчанию ставим максимальный балл по 10-балльной системе
+  const [score, setScore] = useState(10); 
   const [isEditing, setIsEditing] = useState(false);
 
-  // Синхронизируем поля формы, если отзыв найден (режим редактирования) или отсутствует (режим создания)
+  // Синхронизируем поля формы ТОЛЬКО при изменении данных отзыва в кэше
   useEffect(() => {
     if (myReview) {
       setComment(myReview.comment || '');
@@ -39,7 +38,7 @@ export const ProgramDetailsPage: React.FC<ProgramDetailsPageProps> = ({ programI
       setComment('');
       setScore(10);
     }
-  }, [myReview, isEditing]);
+  }, [myReview]); // Из удаленной зависимости 'isEditing' больше не происходит багов со сбросом текста
 
   if (isProgramLoading || isMyReviewLoading || isReviewsLoading) {
     return <div style={{ color: 'var(--text-primary)', padding: '20px' }}>Загрузка данных программы и отзывов...</div>;
@@ -60,6 +59,7 @@ export const ProgramDetailsPage: React.FC<ProgramDetailsPageProps> = ({ programI
       },
       {
         onSuccess: () => {
+          // Вызовется только после того, как useSaveReview завершит await Promise.all
           setIsEditing(false);
         }
       }
@@ -109,7 +109,6 @@ export const ProgramDetailsPage: React.FC<ProgramDetailsPageProps> = ({ programI
       {/* ВЕРХНИЙ БЛОК: Форма создания или отображение личного отзыва */}
       <div style={{ marginBottom: '36px' }}>
         {myReview && !isEditing ? (
-          // Если отзыв найден (200 OK) — показываем красивую карточку отзыва и кнопку редактирования
           <div style={{
             padding: '20px',
             background: 'var(--bg-main)',
@@ -162,7 +161,6 @@ export const ProgramDetailsPage: React.FC<ProgramDetailsPageProps> = ({ programI
             </button>
           </div>
         ) : (
-          // Если отзыва нет (404/204 -> null) ИЛИ мы нажали "Редактировать" — показываем интерактивную форму
           <form onSubmit={handleSubmit} style={{
             padding: '20px',
             background: 'var(--bg-main)',
@@ -173,7 +171,6 @@ export const ProgramDetailsPage: React.FC<ProgramDetailsPageProps> = ({ programI
               {myReview ? 'Редактирование отзыва' : 'Оставьте отзыв и поделитесь вашим мнением о программе'}
             </h3>
             
-            {/* Интерактивные звезды (10-балльная система) */}
             <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Ваша оценка:</span>
               <div style={{ display: 'flex', gap: '4px' }}>

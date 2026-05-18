@@ -23,11 +23,12 @@ export const useSaveReview = (programId: number) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: ReviewRequest) => reviewApi.saveReview(data),
-    onSuccess: () => {
-      // Каскадное обновление данных на лету без перезагрузки страницы
-      queryClient.invalidateQueries({ queryKey: ['myReview', programId] });
-      queryClient.invalidateQueries({ queryKey: ['reviews', programId] });
-      queryClient.invalidateQueries({ queryKey: ['program', programId] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['myReview', programId] }),
+        queryClient.invalidateQueries({ queryKey: ['reviews', programId] }),
+        queryClient.invalidateQueries({ queryKey: ['program', programId] }),
+      ]);
     }
   });
 };
