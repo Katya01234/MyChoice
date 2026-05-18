@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { useProgramDetails } from '../features/university/hooks/useUniversity';
 import { useMyReview, useProgramReviews, useSaveReview } from '../features/university/hooks/useReview';
-import { useProfile } from '../features/auth/api/user';
 import { type ReviewResponse } from '../types/university';
 
 interface ProgramDetailsPageProps {
@@ -19,29 +18,26 @@ const getDegreeLabel = (degree: string) => {
 };
 
 export const ProgramDetailsPage: React.FC<ProgramDetailsPageProps> = ({ programId }) => {
-  // 1. Получаем профиль юзера для проверки роли студента
-  const { data: user } = useProfile(undefined, true);
-  const isStudent = user?.role === 'STUDENT'; // Проверка роли
-
-  // 2. Получаем данные программы и отзывов через TanStack Query
+  // 1. Получаем данные программы и отзывов через TanStack Query
+  // Если отзыва нет (бэк вернул 404), то в myReview запишется null, и страница предложит форму создания
   const { data: program, isLoading: isProgramLoading } = useProgramDetails(programId);
   const { data: myReview, isLoading: isMyReviewLoading } = useMyReview(programId);
   const { data: reviewsData, isLoading: isReviewsLoading } = useProgramReviews(programId);
   const saveReviewMutation = useSaveReview(programId);
 
-  // 3. Стейты формы отзывов
+  // 2. Стейты формы отзывов
   const [comment, setComment] = useState('');
-  const [score, setScore] = useState(5);
+  const [score, setScore] = useState(10); // По умолчанию ставим максимальный балл по 10-балльной системе
   const [isEditing, setIsEditing] = useState(false);
 
-  // Синхронизируем поля формы при редактировании или получении свежего отзыва
+  // Синхронизируем поля формы, если отзыв найден (режим редактирования) или отсутствует (режим создания)
   useEffect(() => {
     if (myReview) {
       setComment(myReview.comment || '');
       setScore(myReview.score);
     } else {
       setComment('');
-      setScore(5);
+      setScore(10);
     }
   }, [myReview, isEditing]);
 
@@ -51,7 +47,7 @@ export const ProgramDetailsPage: React.FC<ProgramDetailsPageProps> = ({ programI
 
   if (!program) return <div style={{ color: 'var(--text-primary)', padding: '20px' }}>Данные программы не найдены</div>;
 
-  // Исключаем наш собственный отзыв из общего списка, чтобы он не дублировался внизу
+  // Исключаем наш собственный отзыв из общего списка остальных пользователей
   const otherReviews = reviewsData?.content.filter(rev => rev.id !== myReview?.id) || [];
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -93,7 +89,7 @@ export const ProgramDetailsPage: React.FC<ProgramDetailsPageProps> = ({ programI
         Код направления: <strong style={{ color: 'var(--text-primary)' }}>{program.direction?.code || 'Н/Д'}</strong> ({program.direction?.name})
       </p>
       <p style={{ color: 'var(--accent-color)', fontWeight: 'bold', marginBottom: '24px' }}>
-        Рейтинг программы: {program.rating?.toFixed(1) || '0.0'} ★
+        Рейтинг программы: {program.rating?.toFixed(1) || '0.0'} / 10 ★
       </p>
 
       {program.description && (
@@ -110,22 +106,10 @@ export const ProgramDetailsPage: React.FC<ProgramDetailsPageProps> = ({ programI
         Отзывы о направлении
       </h2>
 
-      {/* ВЕРХНИЙ БЛОК: Форма или личный отзыв (Только для студентов) */}
+      {/* ВЕРХНИЙ БЛОК: Форма создания или отображение личного отзыва */}
       <div style={{ marginBottom: '36px' }}>
-        {!isStudent ? (
-          // Если юзер не студент — блокируем интерфейс создания отзыва
-          <div style={{
-            padding: '16px',
-            background: 'rgba(255, 180, 0, 0.05)',
-            border: '1px dashed #ffb400',
-            borderRadius: '12px',
-            color: 'var(--text-secondary)',
-            fontSize: '14px'
-          }}>
-            Оставлять отзывы и оценивать направления подготовки могут только верифицированные <strong>Студенты</strong>.
-          </div>
-        ) : myReview && !isEditing ? (
-          // Отображение уже созданного личного отзыва студента
+        {myReview && !isEditing ? (
+          // Если отзыв найден (200 OK) — показываем красивую карточку отзыва и кнопку редактирования
           <div style={{
             padding: '20px',
             background: 'var(--bg-main)',
@@ -148,7 +132,10 @@ export const ProgramDetailsPage: React.FC<ProgramDetailsPageProps> = ({ programI
             </span>
             <h4 style={{ margin: '0 0 6px 0', color: 'var(--text-primary)' }}>Вы оставили отзыв</h4>
             <div style={{ color: '#ffb400', fontSize: '18px', marginBottom: '10px' }}>
-              {'★'.repeat(myReview.score)}{'☆'.repeat(5 - myReview.score)}
+              {'★'.repeat(myReview.score)}{'☆'.repeat(10 - myReview.score)}
+              <span style={{ fontSize: '14px', color: 'var(--text-secondary)', marginLeft: '8px' }}>
+                ({myReview.score} из 10)
+              </span>
             </div>
             {myReview.comment ? (
               <p style={{ color: 'var(--text-primary)', margin: '0 0 16px 0', lineHeight: '1.5' }}>
@@ -175,7 +162,7 @@ export const ProgramDetailsPage: React.FC<ProgramDetailsPageProps> = ({ programI
             </button>
           </div>
         ) : (
-          // Форма написания нового или изменения существующего отзыва
+          // Если отзыва нет (404/204 -> null) ИЛИ мы нажали "Редактировать" — показываем интерактивную форму
           <form onSubmit={handleSubmit} style={{
             padding: '20px',
             background: 'var(--bg-main)',
@@ -183,14 +170,14 @@ export const ProgramDetailsPage: React.FC<ProgramDetailsPageProps> = ({ programI
             borderRadius: '12px'
           }}>
             <h3 style={{ fontSize: '16px', margin: '0 0 16px 0', color: 'var(--text-primary)' }}>
-              {myReview ? 'Редактирование отзыва' : 'Поделитесь вашим мнением о программе'}
+              {myReview ? 'Редактирование отзыва' : 'Оставьте отзыв и поделитесь вашим мнением о программе'}
             </h3>
             
-            {/* Рендер интерактивных звезд */}
+            {/* Интерактивные звезды (10-балльная система) */}
             <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Ваша оценка:</span>
               <div style={{ display: 'flex', gap: '4px' }}>
-                {[1, 2, 3, 4, 5].map((star) => (
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => (
                   <span
                     key={star}
                     onClick={() => setScore(star)}
@@ -205,10 +192,13 @@ export const ProgramDetailsPage: React.FC<ProgramDetailsPageProps> = ({ programI
                   </span>
                 ))}
               </div>
+              <span style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 'bold', marginLeft: '4px' }}>
+                {score}/10
+              </span>
             </div>
 
             <textarea
-              placeholder="Расскажите о качестве преподавания, дисциплинах или сложностях обучения..."
+              placeholder="Расскажите о качестве преподавания, интересных дисциплинах или сложностях обучения..."
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               rows={4}
@@ -266,7 +256,7 @@ export const ProgramDetailsPage: React.FC<ProgramDetailsPageProps> = ({ programI
         )}
       </div>
 
-      {/* НИЖНИЙ БЛОК: Отзывы других студентов */}
+      {/* НИЖНИЙ БЛОК: Отзывы других пользователей */}
       <div style={{ display: 'grid', gap: '16px' }}>
         {otherReviews.length > 0 ? (
           otherReviews.map((rev: ReviewResponse) => (
@@ -281,7 +271,10 @@ export const ProgramDetailsPage: React.FC<ProgramDetailsPageProps> = ({ programI
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                 <div style={{ color: '#ffb400', fontSize: '14px' }}>
-                  {'★'.repeat(rev.score)}{'☆'.repeat(5 - rev.score)}
+                  {'★'.repeat(rev.score)}{'☆'.repeat(10 - rev.score)}
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '6px' }}>
+                    ({rev.score}/10)
+                  </span>
                 </div>
                 <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                   {new Date(rev.createdAt).toLocaleDateString()}

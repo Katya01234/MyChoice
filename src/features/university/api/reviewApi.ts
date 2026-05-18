@@ -25,8 +25,7 @@ const getReviewHeaders = () => ({
   'Accept': 'application/json',
   'Content-Type': 'application/json',
   'ngrok-skip-browser-warning': 'true',
-  'Authorization': `Bearer ${localStorage.getItem('token')}`,
-  'X-Auth-User-Id': getUserIdFromToken()
+  'Authorization': `Bearer ${localStorage.getItem('token')}`
 });
 
 export const reviewApi = {
