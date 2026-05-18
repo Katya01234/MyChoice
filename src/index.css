@@ -235,3 +235,27 @@ img, svg {
   color: var(--accent);
   flex-shrink: 0;
 }
+
+/* src/index.css */
+
+/* Базовый плавный переход для всех кнопок в проекте */
+button, 
+.tag-filter-btn {
+  transition: 
+    background-color 0.25s ease-in-out, 
+    color 0.25s ease-in-out, 
+    border-color 0.25s ease-in-out, 
+    transform 0.15s ease, 
+    box-shadow 0.25s ease-in-out;
+}
+
+/* Эффект легкого уменьшения при клике (active) для отзывчивости интерфейса */
+button:active, 
+.tag-filter-btn:active {
+  transform: scale(0.97);
+}
+
+/* Мягкое подсвечивание при наведении (hover) */
+button:hover {
+  opacity: 0.9;
+}

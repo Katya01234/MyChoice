@@ -6,6 +6,7 @@ import { RatingsPage } from './pages/RatingsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { UniversitiesPage } from './pages/UniversitiesPage';
 import { UniversityDetailsPage } from './pages/UniversityDetailsPage';
+import { ChatPage } from './pages/ChatPage';
 import { AuthPage } from './pages/AuthPage'; 
 // Импортируем провайдер и хук
 import { AuthProvider, useAuth } from './providers/AuthContext';
@@ -39,6 +40,7 @@ const AppContent = ({ theme, setTheme }: { theme: string, setTheme: (t: string) 
                     <Route path="/ratings" element={<RatingsPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/universities" element={<UniversitiesPage />} />
+                    <Route path="/chat" element={<ChatPage />} />
                     {/*<Route path="/faculties/:id" element={<FacultyDetailsPage />} />*/}
                     <Route path="/profile/:username" element={<ProfilePage />} />
                     <Route path="/" element={<Navigate to="/feed" replace />} />
