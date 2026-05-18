@@ -11,7 +11,6 @@ interface FaqItem {
 }
 
 export const FaqPage = () => {
-  // Храним ID открытого вопроса. Если null — все закрыты.
   const [openId, setOpenId] = useState<number | null>(null);
 
   const faqData: FaqItem[] = [
@@ -50,10 +49,12 @@ export const FaqPage = () => {
   };
 
   return (
-    <div className="page-content" style={{ padding: '24px', maxWidth: '800px', margin: '0 auto' }}>
+    <div className="page-content" style={{ padding: '24px', maxWidth: '800px', margin: '0 auto', color: 'var(--md-sys-color-on-background)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '28px' }}>
-        <HelpCircle size={28} style={{ color: 'var(--accent-color)' }} />
-        <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 600 }}>Часто задаваемые вопросы (FAQ)</h1>
+        <HelpCircle size={28} style={{ color: 'var(--md-sys-color-primary-fixed)' }} />
+        <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 600, color: 'var(--md-sys-color-on-background)' }}>
+          Часто задаваемые вопросы (FAQ)
+        </h1>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -63,16 +64,17 @@ export const FaqPage = () => {
             <div
               key={item.id}
               style={{
-                background: 'var(--bg-sidebar)', // Используем переменные темы проекта
+                background: 'var(--md-sys-color-surface-container-low)',
                 borderRadius: '12px',
-                border: '1px solid rgba(255, 255, 255, 0.05)',
+                border: '1px solid var(--md-sys-color-outline-variant)',
                 overflow: 'hidden',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
                 transition: 'all 0.3s ease'
               }}
             >
               {/* Шапка вопроса */}
               <button
+                type="button"
                 onClick={() => toggleAccordion(item.id)}
                 style={{
                   width: '100%',
@@ -84,12 +86,12 @@ export const FaqPage = () => {
                   border: 'none',
                   cursor: 'pointer',
                   textAlign: 'left',
-                  color: 'inherit',
+                  color: 'var(--md-sys-color-on-surface)',
                   fontFamily: 'inherit'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ color: 'var(--accent-color)', display: 'flex' }}>
+                  <span style={{ color: 'var(--md-sys-color-primary-fixed)', display: 'flex' }}>
                     {item.icon}
                   </span>
                   <span style={{ fontWeight: 500, fontSize: '15px' }}>{item.question}</span>
@@ -99,15 +101,16 @@ export const FaqPage = () => {
                   style={{
                     transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                     transition: 'transform 0.25s ease',
-                    opacity: 0.6
+                    color: 'var(--md-sys-color-on-surface-variant)',
+                    opacity: 0.8
                   }}
                 />
               </button>
 
-              {/* Блок ответа с плавной анимацией высоты */}
+              {/* Блок ответа */}
               <div
                 style={{
-                  maxHeight: isOpen ? '200px' : '0',
+                  maxHeight: isOpen ? '240px' : '0',
                   opacity: isOpen ? 1 : 0,
                   overflow: 'hidden',
                   transition: 'max-height 0.3s ease, opacity 0.25s ease',
@@ -116,7 +119,7 @@ export const FaqPage = () => {
               >
                 <p style={{ 
                   margin: 0, 
-                  color: 'rgba(255, 255, 255, 0.7)', 
+                  color: 'var(--md-sys-color-on-surface-variant)', 
                   fontSize: '14px', 
                   lineHeight: '1.6' 
                 }}>
