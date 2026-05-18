@@ -168,5 +168,11 @@ export const universityMockHandlers = {
     const program = mockPrograms.find(p => p.id === id);
     if (!program) throw new Error(`Program with id ${id} not found`);
     return program;
+  },
+  
+  getTopUniversities: (limit: number) => {
+    // Пока возвращаем пустой массив, чтобы TypeScript успокоился.
+    // На следующем шаге мы сможем наполнить его красивыми тестовыми данными!
+    return []; 
   }
 };

@@ -34,6 +34,22 @@ export const universityApi = {
     return response.json();
   },
 
+  getTopUniversities: async (limit = 30): Promise<UniversityResponse[]> => {
+    if (USE_MOCKS) {
+      // На случай если мок-хэндлер еще не написан, вернем пустой массив или вызовем его, если он есть
+      return typeof universityMockHandlers.getTopUniversities === 'function' 
+        ? universityMockHandlers.getTopUniversities(limit) 
+        : [];
+    }
+
+    const response = await fetch(`${BASE_URL}/api/universities/top?limit=${limit}`, {
+      method: 'GET',
+      headers: headers
+    });
+    if (!response.ok) throw new Error('Failed to fetch top universities');
+    return response.json();
+  },
+
   // Получить конкретный университет
   getUniversityById: async (id: number): Promise<UniversityResponse> => {
     if (USE_MOCKS) return universityMockHandlers.getUniversityById(id);

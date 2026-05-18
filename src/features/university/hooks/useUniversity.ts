@@ -9,6 +9,13 @@ export const useUniversities = (page: number, size: number) => {
   });
 };
 
+export const useTopUniversities = (limit = 30) => {
+  return useQuery({
+    queryKey: ['universities', 'top', limit],
+    queryFn: () => universityApi.getTopUniversities(limit),
+  });
+};
+
 export const useUniversityDetails = (id: number) => {
   return useQuery({
     queryKey: ['university', id],

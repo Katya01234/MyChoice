@@ -3,7 +3,7 @@
 // ГЛАВНЫЙ РУБИЛЬНИК ПРИЛОЖЕНИЯ: 
 // true — всё приложение работает на моках
 // false — переключается на реальные эндпоинты бэкенда
-export const USE_MOCKS = false; 
+export const USE_MOCKS = true; 
 
 // Имитация задержки сети (чтобы протестировать isLoading, скелетоны и блокировки кнопок)
 export const mockDelay = (ms = 500) => new Promise(resolve => setTimeout(resolve, ms));
