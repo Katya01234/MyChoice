@@ -1,5 +1,9 @@
 import type { LoginRequest, RegisterRequest } from '../../../types/User';
 
+// --- ИМПОРТИРУЕМ НАШУ СИСТЕМУ МОКОВ ---
+import { USE_MOCKS } from '../../../mocks/config';
+import { authMockHandlers } from '../../../mocks/authMock';
+
 const BASE_URL = 'https://unhygienically-fluxional-sharolyn.ngrok-free.dev'; 
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -25,17 +29,23 @@ export const useRegister = () => {
 };
 
 export const authApi = {
-  login: (data: LoginRequest) => 
-    fetch(`${BASE_URL}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    }),
+  login: (data: LoginRequest): Promise<Response> => {
+    if (USE_MOCKS) return authMockHandlers.login(data); // Перехват моком
 
-  register: (data: RegisterRequest) => 
-    fetch(`${BASE_URL}/api/auth/register`, {
+    return fetch(`${BASE_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
-    })
+    });
+  },
+
+  register: (data: RegisterRequest): Promise<Response> => {
+    if (USE_MOCKS) return authMockHandlers.register(data); // Перехват моком
+
+    return fetch(`${BASE_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+  }
 };

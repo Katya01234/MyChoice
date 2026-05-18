@@ -7,6 +7,10 @@ import {
   type PageResponse,
 } from '../../../types/university';
 
+// --- ИМПОРТИРУЕМ НАШУ СИСТЕМУ МОКОВ ---
+import { USE_MOCKS } from '../../../mocks/config';
+import { universityMockHandlers } from '../../../mocks/universityMock';
+
 const BASE_URL = 'https://unhygienically-fluxional-sharolyn.ngrok-free.dev';
 
 // Общие заголовки для всех запросов к ngrok
@@ -20,6 +24,8 @@ const headers = {
 export const universityApi = {
   // Получить список университетов с пагинацией
   getUniversities: async (page = 0, size = 10): Promise<PageResponse<UniversityResponse>> => {
+    if (USE_MOCKS) return universityMockHandlers.getUniversities(page, size);
+
     const response = await fetch(`${BASE_URL}/api/universities?page=${page}&size=${size}`, {
       method: 'GET',
       headers: headers
@@ -30,6 +36,8 @@ export const universityApi = {
 
   // Получить конкретный университет
   getUniversityById: async (id: number): Promise<UniversityResponse> => {
+    if (USE_MOCKS) return universityMockHandlers.getUniversityById(id);
+
     const response = await fetch(`${BASE_URL}/api/universities/${id}`, {
       method: 'GET',
       headers: headers
@@ -40,6 +48,8 @@ export const universityApi = {
 
   // Получить факультеты конкретного университета
   getUniversityFaculties: async (universityId: number): Promise<FacultyShortResponse[]> => {
+    if (USE_MOCKS) return universityMockHandlers.getUniversityFaculties(universityId);
+
     const response = await fetch(`${BASE_URL}/api/universities/${universityId}/faculties`, {
       method: 'GET',
       headers: headers
@@ -50,6 +60,8 @@ export const universityApi = {
 
   // Получить детальную информацию о факультете
   getFacultyById: async (id: number): Promise<FacultyResponse> => {
+    if (USE_MOCKS) return universityMockHandlers.getFacultyById(id);
+
     const response = await fetch(`${BASE_URL}/api/faculties/${id}`, {
       method: 'GET',
       headers: headers
@@ -59,7 +71,9 @@ export const universityApi = {
   },
 
   // Получить программы факультета
-  getFacultyPrograms: async (facultyId: number) => {
+  getFacultyPrograms: async (facultyId: number): Promise<ProgramResponse[]> => {
+    if (USE_MOCKS) return universityMockHandlers.getFacultyPrograms(facultyId);
+
     const response = await fetch(`${BASE_URL}/api/faculties/${facultyId}/programs`, {
       method: 'GET',
       headers: headers
@@ -70,6 +84,8 @@ export const universityApi = {
 
   // Получить детальную информацию о программе
   getProgramById: async (id: number): Promise<ProgramResponse> => {
+    if (USE_MOCKS) return universityMockHandlers.getProgramById(id);
+
     const response = await fetch(`${BASE_URL}/api/programs/${id}`, {
       method: 'GET',
       headers: headers

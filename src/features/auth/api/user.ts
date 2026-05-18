@@ -1,22 +1,30 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { UserProfile } from '../../../types/User';
+// --- ИМПОРТИРУЕМ НАШУ СИСТЕМУ МОКОВ ---
+import { USE_MOCKS } from '../../../mocks/config';
+import { authMockHandlers } from '../../../mocks/authMock';
 
 const BASE_URL = 'https://unhygienically-fluxional-sharolyn.ngrok-free.dev'; 
 
 // Объект с чистыми запросами
 export const userApi = {
-  getMe: (): Promise<Response> =>
-    fetch(`${BASE_URL}/api/users/me`, {
+  getMe: (): Promise<Response> => {
+    if (USE_MOCKS) return authMockHandlers.getMe(); // Перехват моком
+
+    return fetch(`${BASE_URL}/api/users/me`, {
       method: 'GET',
       headers: { 
         'Accept': 'application/json',
         'ngrok-skip-browser-warning': 'true',
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
-    }),
+    });
+  },
 
-  getPublicProfile: (username: string): Promise<Response> =>
-    fetch(`${BASE_URL}/api/users/${username}`, {
+  getPublicProfile: (username: string): Promise<Response> => {
+    if (USE_MOCKS) return authMockHandlers.getPublicProfile(username); // Перехват моком
+
+    return fetch(`${BASE_URL}/api/users/${username}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -24,10 +32,13 @@ export const userApi = {
         'ngrok-skip-browser-warning': 'true',
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       },
-    }),
+    });
+  },
 
-  updateMe: (userId: string, data: Partial<UserProfile>): Promise<Response> =>
-    fetch(`${BASE_URL}/api/users/me`, {
+  updateMe: (userId: string, data: Partial<UserProfile>): Promise<Response> => {
+    if (USE_MOCKS) return authMockHandlers.updateMe(data); // Перехват моком
+
+    return fetch(`${BASE_URL}/api/users/me`, {
       method: 'PUT',
       headers: { 
         'Content-Type': 'application/json',
@@ -37,7 +48,8 @@ export const userApi = {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       },
       body: JSON.stringify(data)
-    }),
+    });
+  },
 };
 
 // --- УМНЫЕ ХУКИ ДЛЯ КЭШИРОВАНИЯ ---
