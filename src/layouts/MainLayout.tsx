@@ -33,7 +33,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, onThemeChange 
   return (
     <div className="layout-wrapper">
       <aside className="sidebar">
-        <div className="logo">U-Choice</div>
+        <div className="logo">MyChoice</div>
         <nav className="menu">
           <NavLink to="/universities" className={({ isActive }) => isActive ? "menu-item active" : "menu-item"}>
             <GraduationCap size={20} />
